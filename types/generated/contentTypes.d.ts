@@ -512,6 +512,12 @@ export interface PluginContentReleasesRelease extends Schema.CollectionType {
   attributes: {
     name: Attribute.String & Attribute.Required;
     releasedAt: Attribute.DateTime;
+    scheduledAt: Attribute.DateTime;
+    timezone: Attribute.String;
+    status: Attribute.Enumeration<
+      ['ready', 'blocked', 'failed', 'done', 'empty']
+    > &
+      Attribute.Required;
     actions: Attribute.Relation<
       'plugin::content-releases.release',
       'oneToMany',
@@ -566,6 +572,7 @@ export interface PluginContentReleasesReleaseAction
       'manyToOne',
       'plugin::content-releases.release'
     >;
+    isEntryValid: Attribute.Boolean;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -838,11 +845,6 @@ export interface ApiArticleArticle extends Schema.CollectionType {
       'manyToOne',
       'api::author.author'
     >;
-    category: Attribute.Relation<
-      'api::article.article',
-      'manyToOne',
-      'api::category.category'
-    >;
     blocks: Attribute.DynamicZone<
       ['shared.media', 'shared.quote', 'shared.rich-text', 'shared.slider']
     >;
@@ -907,22 +909,20 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
     singularName: 'category';
     pluralName: 'categories';
     displayName: 'Category';
-    description: 'Organize your content into categories';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   attributes: {
-    name: Attribute.String;
-    slug: Attribute.UID;
-    articles: Attribute.Relation<
+    Name: Attribute.String & Attribute.Required & Attribute.Unique;
+    restaurants: Attribute.Relation<
       'api::category.category',
-      'oneToMany',
-      'api::article.article'
+      'manyToMany',
+      'api::restaurant.restaurant'
     >;
-    description: Attribute.Text;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
       'api::category.category',
       'oneToOne',
@@ -971,6 +971,42 @@ export interface ApiGlobalGlobal extends Schema.SingleType {
   };
 }
 
+export interface ApiRestaurantRestaurant extends Schema.CollectionType {
+  collectionName: 'restaurants';
+  info: {
+    singularName: 'restaurant';
+    pluralName: 'restaurants';
+    displayName: 'Restaurant';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Name: Attribute.String & Attribute.Required & Attribute.Unique;
+    Description: Attribute.Blocks;
+    categories: Attribute.Relation<
+      'api::restaurant.restaurant',
+      'manyToMany',
+      'api::category.category'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::restaurant.restaurant',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::restaurant.restaurant',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 declare module '@strapi/types' {
   export module Shared {
     export interface ContentTypes {
@@ -994,6 +1030,7 @@ declare module '@strapi/types' {
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
       'api::global.global': ApiGlobalGlobal;
+      'api::restaurant.restaurant': ApiRestaurantRestaurant;
     }
   }
 }
